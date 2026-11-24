@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可譽中學 - 課堂隨機抽籤與計分系統</title>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+
+            /* Group colors from sheet */
+            --g1-bg: #fce4d6; --g1-text: #5b3a29;
+            --g2-bg: #ddebf7; --g2-text: #1f4e79;
+            --g3-bg: #f2dcdb; --g3-text: #7f2c2b;
+            --g4-bg: #e2efda; --g4-text: #375623;
+            --g5-bg: #fff2cc; --g5-text: #7f6000;
+            --g6-bg: #fce4d6; --g6-text: #833c0c;
+            --g7-bg: #ddebf7; --g7-text: #1f4e79;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .logo-title h1 {
+            font-size: 1.8rem;
+            color: #60a5fa;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(96, 165, 250, 0.3);
+        }
+
+        .logo-title p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .controls-header {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 18px;
+            font-size: 1rem;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background-color: #10b981;
+            color: white;
+            padding: 10px 18px;
+            font-size: 1rem;
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-secondary {
+            background-color: #475569;
+            color: white;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+        }
+
+        .btn-secondary:hover {
+            background-color: #334155;
+        }
+
+        .options-bar {
+            background: #1e293b;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+
+        .toggle-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .groups-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            flex-grow: 1;
+        }
+
+        .group-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .group-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        .group-header {
+            padding: 12px 15px;
+            font-weight: 700;
+            font-size: 1.15rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .group-body {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+
+        .student-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 10px 12px;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .student-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .student-clickable-zone {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-grow: 1;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .student-num {
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.15);
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: bold;
+        }
+
+        .student-names {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .student-zh {
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        .student-en {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .student-score-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .score-badge {
+            background: #2563eb;
+            color: white;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 20px;
+            min-width: 35px;
+            text-align: center;
+            font-size: 0.95rem;
+            box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
+            transition: transform 0.1s ease;
+        }
+
+        .btn-minus {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            width: 24px;
+            height: 24px;
+            font-size: 1rem;
+            border-radius: 50%;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .btn-minus:hover {
+            background: rgba(239, 68, 68, 0.6);
+            color: white;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .picker-box {
+            background: #1e293b;
+            border: 3px solid #3b82f6;
+            border-radius: 20px;
+            padding: 40px 60px;
+            text-align: center;
+            max-width: 90%;
+            width: 500px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(59, 130, 246, 0.4);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .overlay.active .picker-box {
+            transform: scale(1);
+        }
+
+        .picker-title {
+            font-size: 1.5rem;
+            color: #94a3b8;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .picker-result {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #f8fafc;
+            margin-bottom: 30px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .picker-subresult {
+            font-size: 1.8rem;
+            color: #60a5fa;
+            margin-top: 10px;
+        }
+
+        .overlay-close {
+            margin-top: 10px;
+        }
+
+        @keyframes pulse-highlight {
+            0% { transform: scale(1); box-shadow: 0 0 0px rgba(59, 130, 246, 0); }
+            50% { transform: scale(1.03); box-shadow: 0 0 15px rgba(59, 130, 246, 0.8); }
+            100% { transform: scale(1); box-shadow: 0 0 0px rgba(59, 130, 246, 0); }
+        }
+
+        .student-item.highlighted {
+            animation: pulse-highlight 1.5s infinite;
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.15) !important;
+        }
+
+        .group-card.highlighted {
+            animation: pulse-highlight 1.5s infinite;
+            border-color: #3b82f6;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1010;
+        }
+        .modal-content {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+        .modal-content h2 { margin-bottom: 15px; color: #60a5fa; }
+        .modal-content ol { padding-left: 20px; margin-bottom: 20px; }
+        .modal-content li { margin-bottom: 8px; line-height: 1.5; }
+        .close-modal-btn { background: #475569; color: white; padding: 8px 16px; border-radius: 6px; float: right; margin-top: 10px; }
+        .close-modal-btn:hover { background: #334155; }
+
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        @media(max-width: 768px) {
+            .logo-title h1 { font-size: 1.4rem; }
+            .picker-result { font-size: 2.5rem; }
+            .picker-box { padding: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-title">
+            <h1>可譽中學 - 課堂隨機抽籤與計分系統</h1>
+            <p>隨機抽取組別、學生並即時記錄課堂表現分數（系統會自動儲存）</p>
+        </div>
+        <div class="controls-header">
+            <button class="btn-secondary" onclick="openGuide()">📖 使用指南</button>
+            <button class="btn-danger" onclick="resetAllScores()">🔄 重設全班分數</button>
+        </div>
+    </header>
+
+    <div class="options-bar">
+        <div class="controls-header">
+            <button class="btn-primary" onclick="pickRandomGroup()">🎲 隨機抽一組 (Group)</button>
+            <button class="btn-success" onclick="pickRandomStudent()">👤 隨機抽一人 (Student)</button>
+        </div>
+        <div class="toggle-group">
+            <input type="checkbox" id="tts-toggle" checked>
+            <label for="tts-toggle">🔊 抽中時自動進行語音點名 (Cantonese/English)</label>
+        </div>
+    </div>
+
+    <!-- Groups Grid -->
+    <div class="groups-container" id="groups-container">
+        <!-- Rendered by JS -->
+    </div>
+
+    <!-- Animation Overlay for Random Selection -->
+    <div class="overlay" id="picker-overlay">
+        <div class="picker-box">
+            <div class="picker-title" id="overlay-title">正在抽取...</div>
+            <div class="picker-result" id="overlay-result"></div>
+            <button class="btn-primary overlay-close" onclick="closeOverlay()">確定並增加 1 分 🌟</button>
+            <button class="btn-secondary" onclick="closeOverlayWithoutPoints()" style="margin-top:10px; margin-left:10px;">純關閉</button>
+        </div>
+    </div>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Guide Modal -->
+    <div class="modal" id="guide-modal" onclick="closeGuideOnBgClick(event)">
+        <div class="modal-content">
+            <h2>🏫 使用指南 & 計分說明</h2>
+            <ol>
+                <li><strong>手動計分：</strong>直接點擊學生的名字卡片，即可快速為該學生<strong>增加 1 分</strong>。</li>
+                <li><strong>扣分/更正：</strong>點擊學生卡片右側的<strong>「-」按鈕</strong>即可減去 1 分。</li>
+                <li><strong>自動儲存：</strong>每次分數改變時，網頁會自動儲存在這台電腦的瀏覽器中。<strong>即使關網頁、重啟電腦，分數依然保留！</strong></li>
+                <li><strong>隨機抽籤：</strong>點擊「隨機抽一組」或「隨機抽一人」即可，系統會自動播放抽籤動畫和語音點名。</li>
+                <li><strong>重設全班分數：</strong>點擊右上角紅色的「重設全班分數」即可歸零。</li>
+            </ol>
+            <button class="close-modal-btn" onclick="closeGuide()">關閉指南</button>
+        </div>
+    </div>
+
+    <script>
+        const groupsData = {
+            "G1": {
+                name: "G1 第1組",
+                color: "var(--g1-bg)",
+                textColor: "var(--g1-text)",
+                students: [
+                    { id: "1_1", num: "①", zh: "夏米妍", en: "Myanne" },
+                    { id: "1_2", num: "②", zh: "傑迪", en: "Kiaan" },
+                    { id: "1_3", num: "③", zh: "黃心怡", en: "Summie" },
+                    { id: "1_4", num: "④", zh: "陳希霖", en: "Chloe Chan" },
+                    { id: "1_5", num: "⑤", zh: "葉曉桐", en: "" }
+                ]
+            },
+            "G2": {
+                name: "G2 第2組",
+                color: "var(--g2-bg)",
+                textColor: "var(--g2-text)",
+                students: [
+                    { id: "2_1", num: "①", zh: "顏熙翹", en: "Valerian" },
+                    { id: "2_2", num: "③", zh: "李曉瑩", en: "Hailey" },
+                    { id: "2_3", num: "④", zh: "吳端兒", en: "Peony" },
+                    { id: "2_4", num: "④", zh: "奧薩瑪瑪亞拉比", en: "Anabia" }
+                ]
+            },
+            "G3": {
+                name: "G3 第3組",
+                color: "var(--g3-bg)",
+                textColor: "var(--g3-text)",
+                students: [
+                    { id: "3_1", num: "①", zh: "劉季英", en: "Naomi" },
+                    { id: "3_2", num: "②", zh: "許景炫", en: "Jacky" },
+                    { id: "3_3", num: "③", zh: "中山桃花", en: "Momoka" },
+                    { id: "3_4", num: "②", zh: "譚梓晴", en: "Candice" },
+                    { id: "3_5", num: "④", zh: "ZIA", en: "" }
+                ]
+            },
+            "G4": {
+                name: "G4 第4組",
+                color: "var(--g4-bg)",
+                textColor: "var(--g4-text)",
+                students: [
+                    { id: "4_1", num: "①", zh: "李煜堃", en: "Ryan" },
+                    { id: "4_2", num: "②", zh: "林焯軒", en: "Matthew" },
+                    { id: "4_3", num: "③", zh: "李琛悠", en: "Saphna" },
+                    { id: "4_4", num: "④", zh: "陳梓欣", en: "Cindy" }
+                ]
+            },
+            "G5": {
+                name: "G5 第5組",
+                color: "var(--g5-bg)",
+                textColor: "var(--g5-text)",
+                students: [
+                    { id: "5_1", num: "①", zh: "黃日朗", en: "Isaac" },
+                    { id: "5_2", num: "④", zh: "李芷悠", en: "Chloe Lee" },
+                    { id: "5_3", num: "③", zh: "楊凱媱", en: "Yoyo" },
+                    { id: "5_4", num: "④", zh: "溫家傑", en: "Tyler" }
+                ]
+            },
+            "G6": {
+                name: "G6 第6組",
+                color: "var(--g6-bg)",
+                textColor: "var(--g6-text)",
+                students: [
+                    { id: "6_1", num: "①", zh: "劉季宇", en: "" },
+                    { id: "6_2", num: "②", zh: "林靜", en: "" },
+                    { id: "6_3", num: "③", zh: "田陳玉", en: "" },
+                    { id: "6_4", num: "④", zh: "李子欣", en: "" },
+                    { id: "6_5", num: "①", zh: "姚月雅", en: "" }
+                ]
+            },
+            "G7": {
+                name: "G7 第7組",
+                color: "var(--g7-bg)",
+                textColor: "var(--g7-text)",
+                students: [
+                    { id: "7_1", num: "①", zh: "駱隼謙", en: "Cedric" },
+                    { id: "7_2", num: "②", zh: "李文煜", en: "Anson" },
+                    { id: "7_3", num: "③", zh: "李卓熹", en: "Nevin" },
+                    { id: "7_4", num: "④", zh: "劉智恆", en: "Chihang" }
+                ]
+            }
+        };
+
+        let scores = {};
+        let currentTargetId = null;
+        let currentTargetGroup = null;
+
+        function initApp() {
+            const savedScores = localStorage.getItem('class_scores_hoyu');
+            if (savedScores) {
+                scores = JSON.parse(savedScores);
+            } else {
+                Object.keys(groupsData).forEach(gId => {
+                    groupsData[gId].students.forEach(s => {
+                        scores[s.id] = 0;
+                    });
+                });
+                saveScores();
+            }
+            renderBoard();
+        }
+
+        function saveScores() {
+            localStorage.setItem('class_scores_hoyu', JSON.stringify(scores));
+        }
+
+        function renderBoard() {
+            const container = document.getElementById('groups-container');
+            container.innerHTML = '';
+
+            Object.keys(groupsData).forEach(groupId => {
+                const group = groupsData[groupId];
+
+                const card = document.createElement('div');
+                card.className = 'group-card';
+                card.id = `card-${groupId}`;
+
+                const header = document.createElement('div');
+                header.className = 'group-header';
+                header.style.backgroundColor = group.color;
+                header.style.color = group.textColor;
+                header.innerHTML = `<span>${group.name}</span> <button class="btn-success" style="font-size:0.75rem; padding: 4px 8px;" onclick="pickStudentFromGroup('${groupId}')">🎯 抽此組</button>`;
+
+                const body = document.createElement('div');
+                body.className = 'group-body';
+
+                group.students.forEach(student => {
+                    const currentScore = scores[student.id] || 0;
+                    const studentRow = document.createElement('div');
+                    studentRow.className = 'student-item';
+                    studentRow.id = `student-${student.id}`;
+
+                    studentRow.innerHTML = `
+                        <div class="student-clickable-zone" onclick="changeScore('${student.id}', 1)">
+                            <div class="student-num">${student.num || '•'}</div>
+                            <div class="student-names">
+                                <span class="student-zh">${student.zh}</span>
+                                ${student.en ? `<span class="student-en">${student.en}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="student-score-control">
+                            <span class="score-badge" id="score-${student.id}">${currentScore}</span>
+                            <button class="btn-minus" onclick="changeScore('${student.id}', -1)">-</button>
+                        </div>
+                    `;
+                    body.appendChild(studentRow);
+                });
+
+                card.appendChild(header);
+                card.appendChild(body);
+                container.appendChild(card);
+            });
+        }
+
+        function changeScore(studentId, delta) {
+            if (!scores[studentId] && scores[studentId] !== 0) {
+                scores[studentId] = 0;
+            }
+            scores[studentId] = Math.max(0, scores[studentId] + delta);
+            saveScores();
+
+            const badge = document.getElementById(`score-${studentId}`);
+            if (badge) {
+                badge.innerText = scores[studentId];
+                badge.style.transform = "scale(1.2)";
+                setTimeout(() => { badge.style.transform = "scale(1)"; }, 150);
+            }
+        }
+
+        function speakText(text) {
+            const toggle = document.getElementById('tts-toggle');
+            if (!toggle.checked) return;
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                const voices = window.speechSynthesis.getVoices();
+                const cantoneseVoice = voices.find(voice => voice.lang === 'zh-HK' || voice.lang.includes('Cantonese'));
+
+                if (cantoneseVoice) {
+                    utterance.voice = cantoneseVoice;
+                }
+                utterance.rate = 0.95;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        let animationInterval;
+        function runOverlayAnimation(titlesList, finalResult, subResultText, isGroupSelection, targetId) {
+            const overlay = document.getElementById('picker-overlay');
+            const overlayTitle = document.getElementById('overlay-title');
+            const overlayResult = document.getElementById('overlay-result');
+
+            overlayTitle.innerText = isGroupSelection ? "正在抽取幸運小組..." : "正在抽取幸運學生...";
+            overlay.classList.add('active');
+
+            let count = 0;
+            const maxCycles = 15;
+
+            animationInterval = setInterval(() => {
+                const tempIndex = Math.floor(Math.random() * titlesList.length);
+                overlayResult.innerHTML = `<div>${titlesList[tempIndex]}</div>`;
+                count++;
+
+                if (count >= maxCycles) {
+                    clearInterval(animationInterval);
+
+                    if (isGroupSelection) {
+                        overlayResult.innerHTML = `<div>${finalResult}</div>`;
+                    } else {
+                        overlayResult.innerHTML = `
+                            <div>${finalResult}</div>
+                            <div class="picker-subresult">${subResultText}</div>
+                        `;
+                    }
+                    overlayTitle.innerText = "恭喜！🎉";
+
+                    if (isGroupSelection) {
+                        speakText(finalResult);
+                    } else {
+                        speakText(`${finalResult}，請回答問題`);
+                    }
+
+                    if (!isGroupSelection) {
+                        currentTargetId = targetId;
+                        currentTargetGroup = null;
+                    } else {
+                        currentTargetId = null;
+                        currentTargetGroup = targetId;
+                    }
+                    startConfetti();
+                }
+            }, 100);
+        }
+
+        function pickRandomGroup() {
+            clearHighlights();
+            const groupKeys = Object.keys(groupsData);
+            const titles = groupKeys.map(k => groupsData[k].name);
+            const pickedKey = groupKeys[Math.floor(Math.random() * groupKeys.length)];
+            runOverlayAnimation(titles, groupsData[pickedKey].name, "", true, pickedKey);
+        }
+
+        function pickRandomStudent() {
+            clearHighlights();
+            let allStudents = [];
+            Object.keys(groupsData).forEach(gId => {
+                groupsData[gId].students.forEach(s => {
+                    allStudents.push({ ...s, groupId: gId });
+                });
+            });
+
+            if (allStudents.length === 0) return;
+
+            const pickedStudent = allStudents[Math.floor(Math.random() * allStudents.length)];
+            const titles = allStudents.map(s => s.zh);
+
+            runOverlayAnimation(
+                titles,
+                pickedStudent.zh,
+                `${groupsData[pickedStudent.groupId].name} ${pickedStudent.en || ''}`,
+                false,
+                pickedStudent.id
+            );
+        }
+
+        function pickStudentFromGroup(groupId) {
+            clearHighlights();
+            const group = groupsData[groupId];
+            const students = group.students;
+            if (students.length === 0) return;
+
+            const pickedStudent = students[Math.floor(Math.random() * students.length)];
+            const titles = students.map(s => s.zh);
+
+            runOverlayAnimation(
+                titles,
+                pickedStudent.zh,
+                `${group.name} ${pickedStudent.en || ''}`,
+                false,
+                pickedStudent.id
+            );
+        }
+
+        function closeOverlay() {
+            document.getElementById('picker-overlay').classList.remove('active');
+            stopConfetti();
+
+            if (currentTargetId) {
+                changeScore(currentTargetId, 1);
+                highlightStudent(currentTargetId);
+            } else if (currentTargetGroup) {
+                groupsData[currentTargetGroup].students.forEach(s => {
+                    changeScore(s.id, 1);
+                });
+                highlightGroup(currentTargetGroup);
+            }
+        }
+
+        function closeOverlayWithoutPoints() {
+            document.getElementById('picker-overlay').classList.remove('active');
+            stopConfetti();
+
+            if (currentTargetId) {
+                highlightStudent(currentTargetId);
+            } else if (currentTargetGroup) {
+                highlightGroup(currentTargetGroup);
+            }
+        }
+
+        function highlightStudent(id) {
+            clearHighlights();
+            const element = document.getElementById(`student-${id}`);
+            if (element) {
+                element.classList.add('highlighted');
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function highlightGroup(id) {
+            clearHighlights();
+            const element = document.getElementById(`card-${id}`);
+            if (element) {
+                element.classList.add('highlighted');
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.student-item').forEach(el => el.classList.remove('highlighted'));
+            document.querySelectorAll('.group-card').forEach(el => el.classList.remove('highlighted'));
+        }
+
+        function resetAllScores() {
+            if (confirm("⚠️ 您確定要將全班所有學生的分數歸零重設嗎？")) {
+                Object.keys(scores).forEach(id => {
+                    scores[id] = 0;
+                });
+                saveScores();
+                renderBoard();
+                clearHighlights();
+            }
+        }
+
+        function openGuide() {
+            document.getElementById('guide-modal').style.display = 'flex';
+        }
+        function closeGuide() {
+            document.getElementById('guide-modal').style.display = 'none';
+        }
+        function closeGuideOnBgClick(e) {
+            if (e.target.id === 'guide-modal') closeGuide();
+        }
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => {};
+        }
+
+        // CONFETTI SYSTEM
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let confettiActive = false;
+        let confettiPieces = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Confetti {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * -canvas.height;
+                this.size = Math.random() * 8 + 6;
+                this.speed = Math.random() * 5 + 3;
+                this.angle = Math.random() * 360;
+                this.spinSpeed = Math.random() * 10 - 5;
+                this.color = `hsl(${Math.random() * 360}, 100%, 60%)`;
+            }
+            update() {
+                this.y += this.speed;
+                this.angle += this.spinSpeed;
+                if (this.y > canvas.height) {
+                    this.y = -20;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle * Math.PI / 180);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+                ctx.restore();
+            }
+        }
+
+        function startConfetti() {
+            confettiActive = true;
+            confettiPieces = [];
+            for(let i=0; i<80; i++) {
+                confettiPieces.push(new Confetti());
+            }
+            animateConfetti();
+        }
+
+        function stopConfetti() {
+            confettiActive = false;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function animateConfetti() {
+            if (!confettiActive) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            confettiPieces.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateConfetti);
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
